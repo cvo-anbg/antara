@@ -1,4 +1,5 @@
 import type {
+  ChatResponse,
   ComparisonResult,
   SpectrogramData,
   UploadResponse,
@@ -87,6 +88,23 @@ export async function runRegionAnalysis(
   });
   if (!res.ok) {
     const msg = tryParseDetail(await res.text()) ?? `Region analysis failed (${res.status})`;
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function askTrackQuestion(
+  question: string,
+  comparison: ComparisonResult,
+  scope?: string
+): Promise<ChatResponse> {
+  const res = await fetch(`${BASE}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, comparison, scope }),
+  });
+  if (!res.ok) {
+    const msg = tryParseDetail(await res.text()) ?? `Chat failed (${res.status})`;
     throw new Error(msg);
   }
   return res.json();

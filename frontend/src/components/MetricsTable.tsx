@@ -18,6 +18,8 @@ type HigherIsBetter = boolean;
 
 interface Row {
   label: string;
+  beginnerLabel: string;
+  help: string;
   preVal:  number | null | undefined;
   postVal: number | null | undefined;
   delta:   number | null | undefined;
@@ -25,6 +27,8 @@ interface Row {
   higherIsBetter: HigherIsBetter;
   unit?: string;
 }
+
+type RawRow = Omit<Row, "beginnerLabel" | "help">;
 
 const fmtLUFS = (v: number) => `${v.toFixed(1)} LUFS`;
 const fmtLU   = (v: number) => `${v.toFixed(1)} LU`;
@@ -40,7 +44,7 @@ export default function MetricsTable({ comparison }: Props) {
   const post = comparison.post.metrics;
   const d    = comparison.delta;
 
-  const sections: { title: string; rows: Row[] }[] = [
+  const sections: { title: string; rows: RawRow[] }[] = [
     {
       title: "Loudness",
       rows: [
@@ -85,6 +89,11 @@ export default function MetricsTable({ comparison }: Props) {
     },
   ];
 
+  const friendlySections = sections.map((section) => ({
+    ...section,
+    rows: section.rows.map(withBeginnerCopy),
+  }));
+
   return (
     <>
       {/* Colour legend */}
@@ -93,7 +102,7 @@ export default function MetricsTable({ comparison }: Props) {
         <span style={{ color: "var(--diff-neg)" }}>▼ blue = POST decreased</span>
       </div>
 
-      {sections.map(({ title, rows }) => (
+      {friendlySections.map(({ title, rows }) => (
         <div key={title} className="panel-section">
           <div className="section-title">{title}</div>
           <table className="metrics-table">
@@ -110,7 +119,11 @@ export default function MetricsTable({ comparison }: Props) {
                 if (row.preVal == null && row.postVal == null) return null;
                 return (
                   <tr key={row.label}>
-                    <td>{row.label}</td>
+                    <td>
+                      <span>{row.beginnerLabel}</span>
+                      <span className="metric-help" tabIndex={0} aria-label={row.help}>?</span>
+                      <span className="metric-technical">{row.label}</span>
+                    </td>
                     <td className="col-pre">{row.preVal != null ? row.fmt(row.preVal) : "—"}</td>
                     <td className="col-post">{row.postVal != null ? row.fmt(row.postVal) : "—"}</td>
                     <td className={deltaClass(row.delta, row.higherIsBetter)}>
@@ -140,4 +153,83 @@ function formatDelta(delta: number | null | undefined, fmt: (v: number) => strin
   if (delta == null || !isFinite(delta)) return "—";
   const sign = delta > 0 ? "+" : "";
   return sign + fmt(delta).replace(/[^0-9.+-].*/, "") + fmt(delta).replace(/[0-9.+-]+/, "");
+}
+
+function withBeginnerCopy(row: RawRow): Row {
+  const copy: Record<string, { beginnerLabel: string; help: string }> = {
+    Integrated: {
+      beginnerLabel: "Average loudness",
+      help: "The overall perceived loudness across the whole track. More negative LUFS is quieter.",
+    },
+    LRA: {
+      beginnerLabel: "Loudness range",
+      help: "How much the track moves between quieter and louder sections. Very low values can feel flat.",
+    },
+    "Max Momentary": {
+      beginnerLabel: "Loudest instant",
+      help: "The loudest very short moment. Useful for spotting sudden hits or jumps.",
+    },
+    "Max Short-term": {
+      beginnerLabel: "Loudest section",
+      help: "The loudest few-second area. Often points to the chorus or biggest drop.",
+    },
+    "Sample Peak": {
+      beginnerLabel: "Highest sample",
+      help: "The highest digital sample value. Close to 0 means there is little headroom.",
+    },
+    "True Peak": {
+      beginnerLabel: "Real-world peak",
+      help: "Estimates peaks that can appear during playback conversion. Keep below 0, often below -1 dBTP for streaming.",
+    },
+    RMS: {
+      beginnerLabel: "Average power",
+      help: "A simple average energy reading. Higher usually sounds denser or louder.",
+    },
+    "Crest Factor": {
+      beginnerLabel: "Peak contrast",
+      help: "The gap between peaks and average level. Higher usually means more punch.",
+    },
+    PSR: {
+      beginnerLabel: "Punch score",
+      help: "Peak-to-short-term loudness ratio. Lower values can mean heavier limiting or less transient impact.",
+    },
+    Centroid: {
+      beginnerLabel: "Brightness center",
+      help: "The average center of the tone. Higher usually means brighter.",
+    },
+    Rolloff: {
+      beginnerLabel: "Top-end reach",
+      help: "Where most of the high-frequency energy ends. Higher can mean more brightness or air.",
+    },
+    Flatness: {
+      beginnerLabel: "Noise-like tone",
+      help: "Higher means the sound is more noise-like or evenly spread; lower means more tonal or pitched.",
+    },
+    Clipping: {
+      beginnerLabel: "Clipped samples",
+      help: "Samples that hit digital maximum. These can cause harsh distortion.",
+    },
+    "DC Offset L": {
+      beginnerLabel: "Left offset",
+      help: "Checks whether the waveform is shifted away from center. Usually this should be near zero.",
+    },
+    "DC Offset R": {
+      beginnerLabel: "Right offset",
+      help: "Checks whether the right channel waveform is shifted away from center. Usually this should be near zero.",
+    },
+    "Phase Corr.": {
+      beginnerLabel: "Stereo safety",
+      help: "How well left and right channels work together. Very low or negative values can cause mono playback issues.",
+    },
+    "Noise Floor": {
+      beginnerLabel: "Background noise",
+      help: "The quiet background level. Less negative means more audible noise.",
+    },
+  };
+
+  return {
+    ...row,
+    beginnerLabel: copy[row.label]?.beginnerLabel ?? row.label,
+    help: copy[row.label]?.help ?? "Compares PRE and POST for this measurement.",
+  };
 }

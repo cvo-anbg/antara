@@ -131,3 +131,14 @@ class ComparisonResult(BaseModel):
 class AnalyzeRequest(BaseModel):
     pre_id: str
     post_id: str
+
+
+class ChatRequest(BaseModel):
+    question: str
+    comparison: ComparisonResult
+    scope: Optional[str] = None
+
+
+class ChatResponse(BaseModel):
+    answer: str
+    followups: list[str]

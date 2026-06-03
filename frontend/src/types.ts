@@ -118,6 +118,11 @@ export interface ComparisonResult {
   spectrum_diff: SpectrumData;
 }
 
+export interface ChatResponse {
+  answer: string;
+  followups: string[];
+}
+
 export interface TrackInfo {
   id: string;
   filename: string;

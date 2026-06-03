@@ -2,6 +2,8 @@ import { useAppStore } from "../store";
 import MetricsTable from "./MetricsTable";
 import SpectrumChart from "./SpectrumChart";
 import LoudnessChart from "./LoudnessChart";
+import TrackChat from "./TrackChat";
+import { buildInsights } from "../insights";
 
 export default function StatsPanel() {
   const {
@@ -23,6 +25,8 @@ export default function StatsPanel() {
   }
 
   const isRegion = !!regionComparison;
+  const insights = buildInsights(active);
+  const scope = isRegion && region ? `the selected region ${fmtTime(region.start)}-${fmtTime(region.end)}` : "the full track";
 
   return (
     <div className="stats-panel">
@@ -44,11 +48,52 @@ export default function StatsPanel() {
         {analyzingRegion && (
           <div style={{ fontSize: 10, color: "var(--text-dim)" }}>Analysing region…</div>
         )}
+        <InsightsPopover recommendations={insights.recommendations} />
       </div>
+
+      <div className="ai-summary">
+        <div className="section-title">AI Summary</div>
+        <p>{insights.summary}</p>
+      </div>
+
+      <div className="beginner-metrics">
+        <div className="section-title">Beginner Takeaways</div>
+        <div className="beginner-grid">
+          {insights.metrics.map((metric) => (
+            <div key={metric.label} className={`beginner-card ${metric.status}`}>
+              <div className="beginner-card-head">
+                <span>{metric.label}</span>
+                <span className="metric-help" tabIndex={0} aria-label={metric.explanation}>?</span>
+              </div>
+              <div className="beginner-value">{metric.value}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <TrackChat comparison={active} scope={scope} />
 
       <SpectrumChart comparison={active} />
       <LoudnessChart comparison={active} currentTime={currentTime} />
       <MetricsTable comparison={active} />
+    </div>
+  );
+}
+
+function InsightsPopover({ recommendations }: { recommendations: string[] }) {
+  return (
+    <div className="insights-popover">
+      <button className="insight-button" aria-label="Show top recommendations" title="Top recommendations">
+        i
+      </button>
+      <div className="insights-menu">
+        <div className="insights-title">Top 3 Recommendations</div>
+        <ol>
+          {recommendations.map((rec) => (
+            <li key={rec}>{rec}</li>
+          ))}
+        </ol>
+      </div>
     </div>
   );
 }

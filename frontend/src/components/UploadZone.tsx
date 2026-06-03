@@ -88,7 +88,11 @@ export default function UploadZone({ role }: Props) {
         style={{ display: "none" }}
       />
 
-      <div className={`drop-role ${role}`}>{role.toUpperCase()}</div>
+      <div className={`upload-glyph ${role}`} aria-hidden="true">
+        <span className="upload-glyph-arrow" />
+        <span className="upload-glyph-tray" />
+      </div>
+      <div className={`drop-role ${role}`}>{role === "pre" ? "PRE MIX" : "POST MASTER"}</div>
 
       {loaded ? (
         <>
@@ -105,14 +109,15 @@ export default function UploadZone({ role }: Props) {
         </>
       ) : uploading ? (
         <>
-          <div className="drop-label">Uploading & analysing…</div>
+          <div className="drop-label">Uploading and analysing...</div>
           <div className="progress-bar" style={{ width: "80%" }}>
             <div className="progress-fill" style={{ width: `${progress}%` }} />
           </div>
         </>
       ) : (
         <>
-          <div className="drop-label">Drop a file or click to browse</div>
+          <div className="drop-action">Choose audio file</div>
+          <div className="drop-label">or drag and drop here</div>
           <div className="drop-label">WAV · FLAC · AIFF · MP3 · M4A</div>
         </>
       )}

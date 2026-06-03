@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import analyze, audio, region, spectrogram, upload, waveform
+from app.routers import analyze, audio, chat, region, spectrogram, upload, waveform
 
 app = FastAPI(
     title="Audio Pre/Post Comparison API",
@@ -22,6 +22,7 @@ app.include_router(region.router, prefix="/api")
 app.include_router(waveform.router, prefix="/api")
 app.include_router(spectrogram.router, prefix="/api")
 app.include_router(audio.router, prefix="/api")
+app.include_router(chat.router, prefix="/api")
 
 
 @app.get("/health")
