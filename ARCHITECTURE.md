@@ -10,9 +10,11 @@ FastAPI + uvicorn (:8000)
     │
     ├── /api/upload        POST  — decode, hash, run analysis, cache
     ├── /api/analyze       POST  — alignment + delta + comparison JSON
+    ├── /api/region-analyze POST — same comparison on a time-bounded slice
     ├── /api/waveform/:id  GET   — downsampled envelope (min/max/rms)
     ├── /api/spectrogram/:id GET  — STFT magnitude matrix for canvas
-    └── /api/audio/:id     GET   — stream original file (range requests)
+    ├── /api/audio/:id     GET   — stream original file (range requests)
+    └── /api/chat          POST  — rule-based Q&A over the comparison JSON
 ```
 
 ## Analysis pipeline
@@ -69,9 +71,34 @@ Both share the same log-frequency bin grid, so the subtraction is element-wise.
 |---|---|---|
 | `backend/.cache/tracks/<id>.json` | SHA-256 hash | Per-track analysis + spectrogram |
 | `backend/.cache/comparisons/<preId>__<postId>.json` | Hash pair | Comparison result |
+| `backend/.cache/comparisons/<preId>__region_<start>_<end>__<postId>.json` | Hash pair + region bounds | Region comparison result |
 | `backend/.uploads/<id>.<ext>` | SHA-256 hash | Original file (needed for alignment and re-analysis) |
 
 Cache is checked before any computation; cache hits are instant.
+
+### 6. Region analysis (`app/routers/region.py`)
+
+`POST /api/region-analyze` re-runs the full per-track analysis and comparison on a
+time-bounded slice (`pre_id`, `post_id`, `start_sec`, `end_sec`), triggered when the
+user drag-selects a region on the waveform. Regions must be ≥ 0.5 s.
+
+- For WAV/FLAC/AIFF the slice is read directly from disk via `soundfile`'s seek
+  support — O(slice), not O(file). MP3/M4A must be fully decoded first.
+- Spectrograms are skipped (`compute_spectrogram=False`) — the stats panel doesn't need them.
+- Cache keys round start/end to 100 ms so slight drag jitter still hits the cache.
+- The response matches the comparison JSON contract plus a `region` field with the bounds.
+
+### 7. Track chat (`app/routers/chat.py`)
+
+`POST /api/chat` answers natural-language questions about the comparison. It is
+**rule-based keyword matching, not an LLM**: the frontend sends the question plus the
+full `ComparisonResult` JSON, and the endpoint routes on keywords (brightness, bass,
+dynamics, loudness, peaks, frequency, recommendations) to template answers computed
+from the measured data. Stateless — no conversation history is kept.
+
+Band summaries come from `_band_changes()`, which averages the spectrum-diff curve over
+six named bands (sub bass → air) and reports bands shifted by ≥ 0.75 dB. The same band
+table is duplicated in `frontend/src/insights.ts` (`TONE_BANDS`); keep them in sync.
 
 ## JSON contract (comparison endpoint)
 
@@ -125,6 +152,7 @@ App
 │   ├── SpectrumChart  — recharts frequency-response overlay + Δ curve
 │   ├── LoudnessChart  — recharts short-term LUFS over time
 │   └── MetricsTable   — PRE | POST | Δ table with colour-coded deltas
+├── TrackChat          — Q&A panel backed by /api/chat
 └── UploadZone (×2)   — drag-drop file upload with progress
 
 useAudioEngine (hook)  — Web Audio API: two MediaElementSourceNodes → GainNodes → destination
@@ -141,6 +169,5 @@ When enabled: `gain_post = 10^(−Δ_LUFS / 20)` where `Δ_LUFS = post_lufs − 
 
 ## Extension points
 
-- **Region metrics** — the backend already accepts arbitrary slice times for the waveform endpoint; wiring region bounds into `/api/analyze` with `start_sec` / `end_sec` params is the natural next step.
 - **In-app DSP** — add processing endpoints to `app/routers/` and pipe through a new comparison mode; read-only invariant is at the API level only.
 - **Export** — add a `/api/export/report` endpoint that renders the comparison JSON to PDF/CSV.

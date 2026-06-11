@@ -22,7 +22,7 @@ make frontend    # frontend only
 
 ## Architecture
 
-`ARCHITECTURE.md` documents the analysis pipeline, the comparison JSON contract, and frontend component tree in detail — read it before changing metrics or API shapes. Note it predates two endpoints that exist in code: `/api/region-analyze` and `/api/chat`.
+`ARCHITECTURE.md` documents the analysis pipeline, the comparison JSON contract, and frontend component tree in detail — read it before changing metrics or API shapes, and keep it updated when they change.
 
 ### Backend (`backend/`)
 
