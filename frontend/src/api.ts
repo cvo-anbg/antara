@@ -1,6 +1,7 @@
 import type {
   ChatResponse,
   ComparisonResult,
+  SegmentData,
   SpectrogramData,
   UploadResponse,
   WaveformData,
@@ -68,6 +69,12 @@ export async function fetchWaveform(
 export async function fetchSpectrogram(trackId: string): Promise<SpectrogramData> {
   const res = await fetch(`${BASE}/spectrogram/${trackId}`);
   if (!res.ok) throw new Error(`Spectrogram fetch failed (${res.status})`);
+  return res.json();
+}
+
+export async function fetchSegments(trackId: string): Promise<SegmentData> {
+  const res = await fetch(`${BASE}/segments/${trackId}`);
+  if (!res.ok) throw new Error(`Segment fetch failed (${res.status})`);
   return res.json();
 }
 

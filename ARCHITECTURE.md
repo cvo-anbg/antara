@@ -11,6 +11,7 @@ FastAPI + uvicorn (:8000)
     ├── /api/upload        POST  — decode, hash, run analysis, cache
     ├── /api/analyze       POST  — alignment + delta + comparison JSON
     ├── /api/region-analyze POST — same comparison on a time-bounded slice
+    ├── /api/segments/:id  GET   — auto-detected song sections for drill-down
     ├── /api/waveform/:id  GET   — downsampled envelope (min/max/rms)
     ├── /api/spectrogram/:id GET  — STFT magnitude matrix for canvas
     ├── /api/audio/:id     GET   — stream original file (range requests)
@@ -88,7 +89,19 @@ user drag-selects a region on the waveform. Regions must be ≥ 0.5 s.
 - Cache keys round start/end to 100 ms so slight drag jitter still hits the cache.
 - The response matches the comparison JSON contract plus a `region` field with the bounds.
 
-### 7. Track chat (`app/routers/chat.py`)
+### 7. Structural segmentation (`app/routers/segments.py`)
+
+`GET /api/segments/{track_id}` splits a track into 2–8 musically coherent sections
+by agglomerative clustering of MFCC frames (one section per ~25 s, clamped). Each
+section carries its RMS level plus a `loudest`/`quietest` tag. Results are cached
+inside the track's cache JSON.
+
+The frontend renders these as a clickable strip under the waveforms
+(`SegmentStrip`); selecting a section sets it as the active region, which drives
+the normal region-analyze flow — so every section gets the full comparison
+treatment without any new analysis code.
+
+### 8. Track chat (`app/routers/chat.py`)
 
 `POST /api/chat` answers natural-language questions about the comparison. It is
 **rule-based keyword matching, not an LLM**: the frontend sends the question plus the
@@ -148,6 +161,7 @@ App
 ├── WaveformPanel      — custom canvas waveforms (shared time axis, region drag)
 │   ├── SpectrogramCanvas (PRE)
 │   └── SpectrogramCanvas (POST)
+├── SegmentStrip       — clickable auto-detected sections → region drill-down
 ├── StatsPanel
 │   ├── SpectrumChart  — recharts frequency-response overlay + Δ curve
 │   ├── LoudnessChart  — recharts short-term LUFS over time

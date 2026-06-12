@@ -118,6 +118,20 @@ export interface ComparisonResult {
   spectrum_diff: SpectrumData;
 }
 
+export interface TrackSegment {
+  index: number;
+  start: number;
+  end: number;
+  rms_db: number | null;
+  tag: "loudest" | "quietest" | null;
+}
+
+export interface SegmentData {
+  track_id: string;
+  duration: number;
+  segments: TrackSegment[];
+}
+
 export interface ChatResponse {
   answer: string;
   followups: string[];

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { runAnalysis, runRegionAnalysis, fetchSpectrogram } from "./api";
+import { runAnalysis, runRegionAnalysis, fetchSegments, fetchSpectrogram } from "./api";
 import { useAppStore } from "./store";
 import { useAudioEngine } from "./hooks/useAudioEngine";
 import UploadZone from "./components/UploadZone";
@@ -7,7 +7,8 @@ import Transport from "./components/Transport";
 import WaveformPanel from "./components/WaveformPanel";
 import SpectrogramCanvas from "./components/SpectrogramCanvas";
 import StatsPanel from "./components/StatsPanel";
-import type { SpectrogramData } from "./types";
+import SegmentStrip from "./components/SegmentStrip";
+import type { SegmentData, SpectrogramData } from "./types";
 
 export default function App() {
   const {
@@ -25,6 +26,7 @@ export default function App() {
 
   const [preSpec,  setPreSpec]  = useState<SpectrogramData | null>(null);
   const [postSpec, setPostSpec] = useState<SpectrogramData | null>(null);
+  const [segments, setSegments] = useState<SegmentData | null>(null);
 
   const ready         = !!preTrack && !!postTrack;
   const hasComparison = !!comparison;
@@ -58,6 +60,17 @@ export default function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preTrack?.id, postTrack?.id]);
+
+  // Fetch song sections once a comparison exists (non-fatal if it fails)
+  useEffect(() => {
+    setSegments(null);
+    if (!comparison || !preTrack) return;
+    let cancelled = false;
+    fetchSegments(preTrack.id)
+      .then((s) => { if (!cancelled) setSegments(s); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [comparison, preTrack?.id]);
 
   // ── Region analysis — debounced 600 ms after region stops changing ────────
   const regionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -109,6 +122,9 @@ export default function App() {
             <>
               {/* Waveforms — canvas reads audio time directly at 60 Hz */}
               <WaveformPanel audioRef={preElRef} onSeek={seek} />
+
+              {/* Auto-detected song sections — click one to drill into it */}
+              <SegmentStrip data={segments} />
 
               {/* Spectrograms — only shown after analysis */}
               {hasComparison && (

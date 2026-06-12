@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import analyze, audio, chat, region, spectrogram, upload, waveform
+from app.routers import analyze, audio, chat, region, segments, spectrogram, upload, waveform
 
 app = FastAPI(
     title="Audio Pre/Post Comparison API",
@@ -19,6 +19,7 @@ app.add_middleware(
 app.include_router(upload.router, prefix="/api")
 app.include_router(analyze.router, prefix="/api")
 app.include_router(region.router, prefix="/api")
+app.include_router(segments.router, prefix="/api")
 app.include_router(waveform.router, prefix="/api")
 app.include_router(spectrogram.router, prefix="/api")
 app.include_router(audio.router, prefix="/api")

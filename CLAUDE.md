@@ -27,7 +27,7 @@ make frontend    # frontend only
 ### Backend (`backend/`)
 
 - `main.py` creates the FastAPI app and mounts all routers from `app/routers/` under `/api`.
-- Routers: `upload` (decode + hash + analyze + cache), `analyze` (full-track comparison: deltas + spectrum diff), `region` (`/api/region-analyze`, re-runs metrics on a time slice; reads only the needed slice for WAV/FLAC via soundfile seek), `waveform`, `spectrogram`, `audio` (streams original file with range-request support), `chat` (rule-based keyword Q&A over the comparison JSON — **not** an LLM; the frontend sends the full `ComparisonResult` in the request body).
+- Routers: `upload` (decode + hash + analyze + cache), `analyze` (full-track comparison: deltas + spectrum diff), `region` (`/api/region-analyze`, re-runs metrics on a time slice; reads only the needed slice for WAV/FLAC via soundfile seek), `segments` (`/api/segments/{id}`, MFCC-based section detection cached in the track JSON; the frontend's `SegmentStrip` turns sections into region selections), `waveform`, `spectrogram`, `audio` (streams original file with range-request support), `chat` (rule-based keyword Q&A over the comparison JSON — **not** an LLM; the frontend sends the full `ComparisonResult` in the request body).
 - `app/metrics.py` is the single source of truth for all audio numbers (LUFS via pyloudnorm, true peak via 4× oversampling, spectra via librosa). **The frontend never computes audio metrics** — keep it that way.
 - `app/decoder.py`: WAV/FLAC/AIFF decode natively via soundfile; MP3/M4A fall back to audioread (shells out to ffmpeg).
 - `app/models.py`: Pydantic models defining the API contract. Mirror any change in `frontend/src/types.ts`.

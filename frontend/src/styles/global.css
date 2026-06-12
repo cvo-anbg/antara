@@ -741,3 +741,59 @@ code, .mono { font-family: var(--font-mono); }
     overflow-y: auto;
   }
 }
+
+/* ── Segment strip ─────────────────────────────────────────────────────── */
+.segment-strip {
+  display: flex;
+  align-items: stretch;
+  height: 30px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.segment-strip .waveform-label {
+  font-size: 7px;
+}
+
+.segment-strip-track {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+}
+
+.segment-chip {
+  appearance: none;
+  border: none;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.segment-chip:last-child { border-right: none; }
+.segment-chip:hover {
+  background: rgba(167, 139, 250, 0.12);
+  color: var(--text);
+}
+.segment-chip.active {
+  background: rgba(167, 139, 250, 0.25);
+  color: var(--accent);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.segment-chip-label { font-weight: 700; }
+.segment-chip-tag {
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
