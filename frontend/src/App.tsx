@@ -8,7 +8,8 @@ import WaveformPanel from "./components/WaveformPanel";
 import SpectrogramCanvas from "./components/SpectrogramCanvas";
 import StatsPanel from "./components/StatsPanel";
 import SegmentStrip from "./components/SegmentStrip";
-import type { SegmentData, SpectrogramData } from "./types";
+import { buildSectionVerdict } from "./insights";
+import type { SpectrogramData } from "./types";
 
 export default function App() {
   const {
@@ -17,6 +18,7 @@ export default function App() {
     setRegionComparison,
     currentTime,
     region,
+    segments, setSegments, setSectionVerdict,
     analyzing, setAnalyzing,
     setAnalyzingRegion,
     error, setError,
@@ -26,7 +28,6 @@ export default function App() {
 
   const [preSpec,  setPreSpec]  = useState<SpectrogramData | null>(null);
   const [postSpec, setPostSpec] = useState<SpectrogramData | null>(null);
-  const [segments, setSegments] = useState<SegmentData | null>(null);
 
   const ready         = !!preTrack && !!postTrack;
   const hasComparison = !!comparison;
@@ -71,6 +72,27 @@ export default function App() {
       .catch(() => {});
     return () => { cancelled = true; };
   }, [comparison, preTrack?.id]);
+
+  // Compute one-line verdicts per section in the background, sequentially.
+  // Each call hits /api/region-analyze, which is cached server-side, so the
+  // same requests fired by clicking a section later are instant.
+  useEffect(() => {
+    if (!segments || !preTrack || !postTrack) return;
+    let cancelled = false;
+    (async () => {
+      for (const seg of segments.segments) {
+        if (cancelled) return;
+        try {
+          const result = await runRegionAnalysis(preTrack.id, postTrack.id, seg.start, seg.end);
+          if (!cancelled) setSectionVerdict(seg.index, buildSectionVerdict(result));
+        } catch {
+          // Verdicts are progressive enhancement — skip failures silently
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [segments, preTrack?.id, postTrack?.id]);
 
   // ── Region analysis — debounced 600 ms after region stops changing ────────
   const regionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -124,7 +146,7 @@ export default function App() {
               <WaveformPanel audioRef={preElRef} onSeek={seek} />
 
               {/* Auto-detected song sections — click one to drill into it */}
-              <SegmentStrip data={segments} />
+              <SegmentStrip />
 
               {/* Spectrograms — only shown after analysis */}
               {hasComparison && (

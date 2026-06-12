@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import type { ComparisonResult, TrackInfo, WaveformData } from "./types";
+import type { ComparisonResult, SegmentData, TrackInfo, WaveformData } from "./types";
+import type { SectionVerdict } from "./insights";
 
 export type ActiveSource = "pre" | "post";
 
@@ -11,6 +12,10 @@ interface AppState {
   regionComparison: ComparisonResult | null;
   preWaveform:  WaveformData | null;
   postWaveform: WaveformData | null;
+  /** Auto-detected song sections (from /api/segments). */
+  segments: SegmentData | null;
+  /** One-line verdicts per section index, filled in lazily in the background. */
+  sectionVerdicts: Record<number, SectionVerdict>;
 
   isPlaying:    boolean;
   currentTime:  number;
@@ -34,6 +39,8 @@ interface AppState {
   setRegionComparison: (c: ComparisonResult | null) => void;
   setPreWaveform:  (w: WaveformData | null) => void;
   setPostWaveform: (w: WaveformData | null) => void;
+  setSegments: (s: SegmentData | null) => void;
+  setSectionVerdict: (index: number, v: SectionVerdict) => void;
   setIsPlaying:    (v: boolean) => void;
   setCurrentTime:  (t: number) => void;
   setActiveSource: (s: ActiveSource) => void;
@@ -57,6 +64,8 @@ const initial = {
   regionComparison: null,
   preWaveform:  null,
   postWaveform: null,
+  segments: null,
+  sectionVerdicts: {},
   isPlaying:     false,
   currentTime:   0,
   activeSource:  "pre" as ActiveSource,
@@ -80,6 +89,9 @@ export const useAppStore = create<AppState>((set) => ({
   setRegionComparison: (c) => set({ regionComparison: c }),
   setPreWaveform:  (w) => set({ preWaveform: w }),
   setPostWaveform: (w) => set({ postWaveform: w }),
+  setSegments: (s) => set({ segments: s, sectionVerdicts: {} }),
+  setSectionVerdict: (index, v) =>
+    set((state) => ({ sectionVerdicts: { ...state.sectionVerdicts, [index]: v } })),
   setIsPlaying:    (v) => set({ isPlaying: v }),
   setCurrentTime:  (t) => set({ currentTime: t }),
   setActiveSource: (s) => set({ activeSource: s }),

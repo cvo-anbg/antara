@@ -42,7 +42,7 @@ make frontend    # frontend only
 - `types.ts`: TypeScript mirrors of the backend Pydantic models.
 - `hooks/useAudioEngine.ts`: Web Audio playback — two `<audio>` elements playing in lock-step, each through a GainNode; A/B switching just swaps gains (0/1), optionally with a loudness-match offset (`gain_post = 10^(−Δ_LUFS / 20)`, applied only when POST is active, never persisted).
 - `insights.ts`: plain-language interpretation of comparison data for the UI. Its `TONE_BANDS` table (sub bass → air, with Hz bounds) is duplicated in `backend/app/routers/chat.py::_band_changes` — keep the two in sync if you change band definitions.
-- Components: `Transport` (playback/A-B/seek), `WaveformPanel` + `SpectrogramCanvas` (custom canvas, shared time axis, region drag triggers `/api/region-analyze`), `StatsPanel` (`SpectrumChart`/`LoudnessChart` via recharts, `MetricsTable`), `UploadZone`, `TrackChat`.
+- Components: `Transport` (playback/A-B/seek), `WaveformPanel` + `SpectrogramCanvas` (custom canvas, shared time axis, region drag triggers `/api/region-analyze`), `StatsPanel` (verdict-first Simple view with per-section verdict cards + Charts view: `SpectrumChart`/`LoudnessChart` via recharts, `MetricsTable`), `UploadZone`, `TrackChat`.
 
 ### Key invariants
 

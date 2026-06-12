@@ -8,12 +8,12 @@
  */
 
 import { useAppStore } from "../store";
-import type { SegmentData, TrackSegment } from "../types";
+import type { TrackSegment } from "../types";
 
 const LETTERS = "ABCDEFGHIJKLMNOP";
 
-export default function SegmentStrip({ data }: { data: SegmentData | null }) {
-  const { region, setRegion, setIsLooping } = useAppStore();
+export default function SegmentStrip() {
+  const { segments: data, region, setRegion, setIsLooping } = useAppStore();
 
   if (!data || data.segments.length < 2) return null;
   const duration = data.duration || 1;

@@ -797,3 +797,117 @@ code, .mono { font-family: var(--font-mono); }
   letter-spacing: 0.08em;
   opacity: 0.8;
 }
+
+/* ── Simple/Charts view toggle ─────────────────────────────────────────── */
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.view-toggle button {
+  appearance: none;
+  border: none;
+  background: var(--surface);
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+.view-toggle button.on {
+  background: rgba(167, 139, 250, 0.2);
+  color: var(--accent);
+}
+
+.show-why {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--accent);
+  cursor: pointer;
+}
+.show-why:hover { text-decoration: underline; }
+
+/* ── Section-by-section verdict cards ──────────────────────────────────── */
+.section-verdicts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section-verdict-card {
+  appearance: none;
+  text-align: left;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 12px;
+  transition: background 0.15s;
+}
+.section-verdict-card:hover { background: rgba(167, 139, 250, 0.08); }
+.section-verdict-card.good  { border-left-color: var(--green); }
+.section-verdict-card.watch { border-left-color: var(--post); }
+.section-verdict-card.active {
+  background: rgba(167, 139, 250, 0.15);
+  border-color: rgba(167, 139, 250, 0.5);
+  border-left-width: 3px;
+}
+
+.svc-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+.svc-letter {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--accent);
+}
+.svc-time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.svc-tag {
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+.svc-text { line-height: 1.4; }
+
+/* ── Mobile: stack panels vertically ───────────────────────────────────── */
+@media (max-width: 760px) {
+  .app-layout {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+  .main-area {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    overflow: visible;
+  }
+  .center-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .right-panel {
+    overflow-y: visible;
+  }
+  .waveform-row { min-height: 80px; }
+}

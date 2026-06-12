@@ -124,6 +124,43 @@ export function buildInsights(comparison: ComparisonResult): InsightBundle {
   return { summary, recommendations: recommendations.slice(0, 3), metrics };
 }
 
+export interface SectionVerdict {
+  text: string;
+  status: "good" | "watch" | "neutral";
+}
+
+/** Compact one-line verdict for a section-scoped comparison. */
+export function buildSectionVerdict(comparison: ComparisonResult): SectionVerdict {
+  const d = comparison.delta;
+  const post = comparison.post.metrics;
+  const loudnessDelta = d.integrated_lufs ?? 0;
+  const psrDelta = d.psr_db ?? 0;
+  const crestDelta = d.crest_factor_db ?? 0;
+  const clipping = post.quality.clip_count ?? 0;
+  const bands = summarizeBands(comparison);
+
+  const parts: string[] = [];
+  if (Math.abs(loudnessDelta) >= 0.7) {
+    parts.push(`${abs1(loudnessDelta)} LU ${loudnessDelta > 0 ? "louder" : "quieter"}`);
+  }
+  if (psrDelta < -0.8 || crestDelta < -0.8) parts.push("less punch");
+  else if (psrDelta > 0.8 || crestDelta > 0.8) parts.push("more punch");
+  if (bands[0]) parts.push(`${bands[0].direction} ${bands[0].name.toLowerCase()}`);
+  if (clipping > 0) parts.push("clipping here");
+
+  const status: SectionVerdict["status"] =
+    clipping > 0 || psrDelta < -2 || crestDelta < -2
+      ? "watch"
+      : parts.length === 0
+        ? "good"
+        : "neutral";
+
+  return {
+    text: parts.length ? parts.join(" · ") : "almost identical here",
+    status,
+  };
+}
+
 function summarizeBands(comparison: ComparisonResult) {
   return TONE_BANDS.map((band) => {
     const vals = comparison.spectrum_diff.freqs

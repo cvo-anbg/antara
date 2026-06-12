@@ -101,6 +101,12 @@ The frontend renders these as a clickable strip under the waveforms
 the normal region-analyze flow — so every section gets the full comparison
 treatment without any new analysis code.
 
+After segments load, the frontend also walks them sequentially in the background,
+calling `/api/region-analyze` per section to build one-line verdicts
+(`insights.ts::buildSectionVerdict`) shown as cards in the stats panel's Simple
+view. Because those calls are cached server-side, clicking a section later is
+instant.
+
 ### 8. Track chat (`app/routers/chat.py`)
 
 `POST /api/chat` answers natural-language questions about the comparison. It is
@@ -162,10 +168,13 @@ App
 │   ├── SpectrogramCanvas (PRE)
 │   └── SpectrogramCanvas (POST)
 ├── SegmentStrip       — clickable auto-detected sections → region drill-down
-├── StatsPanel
-│   ├── SpectrumChart  — recharts frequency-response overlay + Δ curve
-│   ├── LoudnessChart  — recharts short-term LUFS over time
-│   └── MetricsTable   — PRE | POST | Δ table with colour-coded deltas
+├── StatsPanel         — verdict-first; Simple/Charts view toggle
+│   ├── Simple view    — plain-language verdict, beginner cards,
+│   │                    per-section verdict cards, TrackChat
+│   └── Charts view
+│       ├── SpectrumChart  — recharts frequency-response overlay + Δ curve
+│       ├── LoudnessChart  — recharts short-term LUFS over time
+│       └── MetricsTable   — PRE | POST | Δ table with colour-coded deltas
 ├── TrackChat          — Q&A panel backed by /api/chat
 └── UploadZone (×2)   — drag-drop file upload with progress
 
